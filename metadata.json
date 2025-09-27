@@ -1,0 +1,5 @@
+{
+  "name": "Industrial Production Monitor",
+  "description": "A full-screen replica of an industrial production monitoring interface, featuring live, updating counters for passed, good, and waste sheets to simulate a real-time factory floor dashboard.",
+  "requestFramePermissions": []
+}
