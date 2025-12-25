@@ -62,13 +62,12 @@ const ColorGrid: React.FC = () => (
 // --- Main App Component ---
 
 const App: React.FC = () => {
-    const [passedSheet, setPassedSheet] = useState(0);
+    const [scheduleSheet, setScheduleSheet] = useState(1450);
     const [goodSheet, setGoodSheet] = useState(0);
-    const [isPassedCounting, setIsPassedCounting] = useState(false);
     const [isGoodCounting, setIsGoodCounting] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [counterSpeed, setCounterSpeed] = useState(1800); // Speed in milliseconds
 
-    const passedIntervalRef = useRef<number | null>(null);
     const goodIntervalRef = useRef<number | null>(null);
 
     // Timer for the header clock
@@ -77,51 +76,47 @@ const App: React.FC = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Effect for Passed Sheet counter
-    useEffect(() => {
-        if (isPassedCounting) {
-            passedIntervalRef.current = window.setInterval(() => {
-                setPassedSheet(prev => prev + 1);
-            }, 1500);
-        } else {
-            if (passedIntervalRef.current) clearInterval(passedIntervalRef.current);
-        }
-        return () => {
-            if (passedIntervalRef.current) clearInterval(passedIntervalRef.current);
-        };
-    }, [isPassedCounting]);
-    
     // Effect for Good Sheet counter
     useEffect(() => {
         if (isGoodCounting) {
             goodIntervalRef.current = window.setInterval(() => {
-                setGoodSheet(prev => prev + 1);
-            }, 1800); // Slightly different speed for realism
+                setGoodSheet(prev => {
+                    // Stop counting when reaching schedule sheet limit
+                    if (prev + 1 >= scheduleSheet) {
+                        setIsGoodCounting(false);
+                        return scheduleSheet;
+                    }
+                    return prev + 1;
+                });
+            }, counterSpeed);
         } else {
             if (goodIntervalRef.current) clearInterval(goodIntervalRef.current);
         }
         return () => {
             if (goodIntervalRef.current) clearInterval(goodIntervalRef.current);
         };
-    }, [isGoodCounting]);
-    
-    const handlePassedStart = () => setIsPassedCounting(true);
-    const handlePassedStop = () => {
-        setIsPassedCounting(false);
-        setIsGoodCounting(false); // Also stop the good sheet counter
-    };
-    
+    }, [isGoodCounting, counterSpeed, scheduleSheet]);
+
     const handleGoodStart = () => setIsGoodCounting(true);
     const handleGoodStop = () => setIsGoodCounting(false);
 
     const handleReset = () => {
-        setIsPassedCounting(false);
         setIsGoodCounting(false);
-        setPassedSheet(0);
         setGoodSheet(0);
     };
 
-    const wasteSheet = passedSheet - goodSheet;
+    const handleScheduleSheetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = parseInt(e.target.value) || 0;
+        setScheduleSheet(value);
+    };
+
+    const handleSpeedUp = () => {
+        setCounterSpeed(prev => Math.max(100, prev - 200)); // Decrease interval = faster, minimum 100ms
+    };
+
+    const handleSpeedDown = () => {
+        setCounterSpeed(prev => Math.min(5000, prev + 200)); // Increase interval = slower, maximum 5000ms
+    };
     const formattedDate = `${(currentTime.getMonth() + 1)}/${currentTime.getDate()}/${currentTime.getFullYear()}`;
     const formattedTime = currentTime.toLocaleTimeString('en-US', { hour12: false });
 
@@ -229,12 +224,17 @@ const App: React.FC = () => {
                             </button>
                         </div>
                         <div className="p-2 bg-gray-300 border-2 border-t-gray-100 border-l-gray-100 border-b-gray-500 border-r-gray-500 space-y-3">
-                            <LabeledDisplay label="SCH. SHEET" value={1450} valueAlign="text-right" labelClassName="w-40 justify-start !py-2" valueClassName="!bg-white !text-black !text-3xl !py-2"/>
-                            
-                            <LabeledDisplay label="PASSED SHEET" value={passedSheet} valueAlign="text-right" labelClassName="w-40 justify-start !py-2" valueClassName="!bg-white !text-black !text-3xl !py-2"/>
-                            <div className="flex space-x-2">
-                                <button onClick={handlePassedStart} disabled={isPassedCounting} className="flex-1 bg-green-600 text-white font-bold py-1 rounded shadow-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm">START</button>
-                                <button onClick={handlePassedStop} disabled={!isPassedCounting} className="flex-1 bg-red-600 text-white font-bold py-1 rounded shadow-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm">STOP</button>
+                            {/* Schedule Sheet with manual input */}
+                            <div className="flex items-stretch">
+                                <div className="bg-blue-800 text-white font-bold py-2 px-3 text-base flex items-center w-40 justify-start">
+                                    <span>SCH. SHEET</span>
+                                </div>
+                                <input
+                                    type="number"
+                                    value={scheduleSheet}
+                                    onChange={handleScheduleSheetChange}
+                                    className="bg-white text-black border-2 border-gray-500 shadow-inner px-2 py-2 text-3xl font-mono font-bold w-full text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
                             </div>
 
                             <LabeledDisplay label="GOOD SHEET" value={goodSheet} valueAlign="text-right" labelClassName="w-40 justify-start !py-2" valueClassName="!bg-white !text-black !text-3xl !py-2"/>
@@ -243,9 +243,24 @@ const App: React.FC = () => {
                                 <button onClick={handleGoodStop} disabled={!isGoodCounting} className="flex-1 bg-red-600 text-white font-bold py-1 rounded shadow-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm">STOP</button>
                             </div>
 
-                            <LabeledDisplay label="WASTE SHEET" value={wasteSheet < 0 ? 0 : wasteSheet} valueAlign="text-right" labelClassName="w-40 justify-start !py-2" valueClassName="!bg-white !text-black !text-3xl !py-2"/>
                              <div className="border-t-2 border-gray-400 my-2"></div>
                              <button onClick={handleReset} className="w-full bg-blue-600 text-white font-bold py-2 rounded-md shadow-md hover:bg-blue-700 transition-colors">RESET ALL</button>
+
+                             <div className="border-t-2 border-gray-400 my-2"></div>
+                             <div className="space-y-2">
+                                <div className="text-center font-bold text-sm">COUNTER SPEED</div>
+                                <div className="flex space-x-2">
+                                    <button onClick={handleSpeedDown} className="flex-1 bg-orange-600 text-white font-bold py-2 rounded shadow-md hover:bg-orange-700 transition-colors">
+                                        <span className="text-lg">▼</span> SLOW
+                                    </button>
+                                    <button onClick={handleSpeedUp} className="flex-1 bg-green-600 text-white font-bold py-2 rounded shadow-md hover:bg-green-700 transition-colors">
+                                        <span className="text-lg">▲</span> FAST
+                                    </button>
+                                </div>
+                                <div className="text-center text-xs font-mono bg-white border border-gray-400 py-1 rounded">
+                                    Speed: {counterSpeed}ms
+                                </div>
+                             </div>
                         </div>
                         <div className="p-1 bg-gray-300 border-2 border-t-gray-100 border-l-gray-100 border-b-gray-500 border-r-gray-500 flex-grow">
                             <div className="grid grid-cols-2 gap-2">
