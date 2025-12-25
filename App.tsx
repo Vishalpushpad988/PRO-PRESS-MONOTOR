@@ -224,6 +224,8 @@ const App: React.FC = () => {
                             </button>
                         </div>
                         <div className="p-2 bg-gray-300 border-2 border-t-gray-100 border-l-gray-100 border-b-gray-500 border-r-gray-500 space-y-3">
+                            <LabeledDisplay label="GOOD SHEET" value={goodSheet} valueAlign="text-right" labelClassName="w-40 justify-start !py-2" valueClassName="!bg-white !text-black !text-3xl !py-2"/>
+
                             {/* Schedule Sheet with manual input */}
                             <div className="flex items-stretch">
                                 <div className="bg-blue-800 text-white font-bold py-2 px-3 text-base flex items-center w-40 justify-start">
@@ -237,7 +239,6 @@ const App: React.FC = () => {
                                 />
                             </div>
 
-                            <LabeledDisplay label="GOOD SHEET" value={goodSheet} valueAlign="text-right" labelClassName="w-40 justify-start !py-2" valueClassName="!bg-white !text-black !text-3xl !py-2"/>
                              <div className="flex space-x-2">
                                 <button onClick={handleGoodStart} disabled={isGoodCounting} className="flex-1 bg-green-600 text-white font-bold py-1 rounded shadow-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm">START</button>
                                 <button onClick={handleGoodStop} disabled={!isGoodCounting} className="flex-1 bg-red-600 text-white font-bold py-1 rounded shadow-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm">STOP</button>
